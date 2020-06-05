@@ -1,0 +1,62 @@
+﻿@page "/"
+
+@using System.IO;
+@using System.Text;
+
+<input type="checkbox" @bind="@ReproduceBug" /> Reproduce bug<br/>
+<button @onclick="RunTest">Run Test</button>
+<pre>
+@Output
+</pre>
+
+@code {
+    public bool ReproduceBug = false;
+    public string Output { get; set; }
+    async Task RunTest()
+    {
+        var testString = "Hello World";
+        List<string> fileContent;
+        using (Stream stream = new StringStream(testString, Encoding.UTF8))
+        {
+            fileContent = ReproduceBug ?
+                await ReadLinesBrokenAsync(stream, Encoding.UTF8) :
+                await ReadLinesWorkingAsync(stream, Encoding.UTF8);
+        }
+
+        var content = string.Join(Environment.NewLine, fileContent);
+
+        Output = $"fileContent: '{content}' {(content == testString ? "OK" : "KO")}";
+    }
+
+    public async Task<List<string>> ReadLinesWorkingAsync(Stream stream, Encoding encoding)
+    {
+        using (var reader = new StreamReader(stream, encoding))
+        {
+            string line;
+            var result = new List<string>();
+            line = await reader.ReadLineAsync();
+            while (line != null)
+            {
+                result.Add(line);
+                line = await reader.ReadLineAsync();
+            }
+            return result;
+        }
+    }
+
+    public async Task<List<string>> ReadLinesBrokenAsync(Stream stream, Encoding encoding)
+    {
+        using (var reader = new StreamReader(stream, encoding))
+        {
+            string line;
+            var result = new List<string>();
+
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                result.Add(line);
+            }
+            return result;
+        }
+    }
+
+}
