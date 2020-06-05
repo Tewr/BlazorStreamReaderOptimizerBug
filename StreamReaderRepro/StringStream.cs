@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,38 +37,7 @@ namespace StreamReaderRepro
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (offset > Length)
-                throw new ArgumentOutOfRangeException("offset");
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    {
-                        if (offset < 0)
-                            throw new IOException("SeekBeforeBegin");
-                        Position = offset;
-                        break;
-                    }
-                case SeekOrigin.Current:
-                    {
-                        int tempPosition = unchecked((int)Position + (int)offset);
-                        if (unchecked((int)Position + offset) < 0 || tempPosition < 0)
-                            throw new IOException("SeekBeforeBegin");
-                        Position = tempPosition;
-                        break;
-                    }
-                case SeekOrigin.End:
-                    {
-                        int tempPosition = unchecked((int)(Length + (int)offset));
-                        if (unchecked(Length + offset) < 0 || tempPosition < 0)
-                            throw new IOException("IO.IO_SeekBeforeBegin");
-                        Position = tempPosition;
-                        break;
-                    }
-                default:
-                    throw new ArgumentException("Argument_InvalidSeekOrigin");
-            }
-
-            return Position;
+            throw new NotImplementedException();
         }
 
         public override void SetLength(long value)
@@ -86,7 +52,6 @@ namespace StreamReaderRepro
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await Task.Delay(1);
             var actualCount = count;
             if (Position + actualCount > Length)
             {
@@ -97,7 +62,6 @@ namespace StreamReaderRepro
             Position += actualCount;
 
             return actualCount;
-            //return base.ReadAsync(buffer, offset, count, cancellationToken);
         }
     }
 }
