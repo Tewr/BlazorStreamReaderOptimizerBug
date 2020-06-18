@@ -12,51 +12,55 @@
 @code {
     public bool ReproduceBug = false;
     public string Output { get; set; }
+    private int i;
+
     async Task RunTest()
     {
-        var testString = "Hello World";
+        i = 0;
+        var expected = $"1{Environment.NewLine}2";
         List<string> fileContent;
-        using (Stream stream = new StringStream(testString, Encoding.UTF8))
-        {
-            fileContent = ReproduceBug ?
-                await ReadLinesBrokenAsync(stream, Encoding.UTF8) :
-                await ReadLinesWorkingAsync(stream, Encoding.UTF8);
-        }
+
+        fileContent = ReproduceBug ?
+            await WhileHeaderBrokenAsync() :
+            await WhileHeaderWorkingAsync();
 
         var content = string.Join(Environment.NewLine, fileContent);
 
-        Output = $"fileContent: '{content}' {(content == testString ? "OK" : "KO")}";
+        Output = $"fileContent: '{content}' {(content == expected ? "OK" : "KO")}";
     }
 
-    public async Task<List<string>> ReadLinesWorkingAsync(Stream stream, Encoding encoding)
+    public async Task<List<string>> WhileHeaderWorkingAsync()
     {
-        using (var reader = new StreamReader(stream, encoding))
+        string line;
+        var result = new List<string>();
+        line = await ReadLineAsync();
+        while (line != null)
         {
-            string line;
-            var result = new List<string>();
-            line = await reader.ReadLineAsync();
-            while (line != null)
-            {
-                result.Add(line);
-                line = await reader.ReadLineAsync();
-            }
-            return result;
+            result.Add(line);
+            line = await ReadLineAsync();
         }
+        return result;
     }
 
-    public async Task<List<string>> ReadLinesBrokenAsync(Stream stream, Encoding encoding)
+    public async Task<List<string>> WhileHeaderBrokenAsync()
     {
-        using (var reader = new StreamReader(stream, encoding))
+        string line;
+        var result = new List<string>();
+        while ((line = await ReadLineAsync()) != null)
         {
-            string line;
-            var result = new List<string>();
-
-            while ((line = await reader.ReadLineAsync()) != null)
-            {
-                result.Add(line);
-            }
-            return result;
+            result.Add(line);
         }
+        return result;
     }
 
+    public async Task<string> ReadLineAsync()
+    {
+        this.i++;
+        if (this.i > 3)
+        {
+            return null;
+        }
+
+        return i.ToString();
+    }
 }
